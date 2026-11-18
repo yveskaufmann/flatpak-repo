@@ -1,0 +1,6 @@
+[Flatpak Repo]
+Title=Yves Kaufmann's Personal Flatpak
+Url=https://yveskaufmann.github.io/flatpak-repo/
+Homepage=https://github.com/yveskaufmann/flatpak-repo
+Comment=Personal Flatpak repository to distribute my personal apps.
+GPGKey=mDMEav3PPxYJKwYBBAHaRw8BAQdAWKHLTKBZlHyX3DbBNYjS0Yt5rNzSe8qG2jPOHXwcLle0NFl2ZXNLYXVmbWFubiBGbGF0cGFrIFJlcG9zaXRvcnkgPG5vcmVwbHlAZ2l0aHViLmNvbT6IlgQTFgoAPhYhBA5R6XTeJuTuSUvTvjs+MlG893hMBQJq/c8/AhsDBQkB4TOABQsJCAcCBhUKCQgLAgQWAgMBAh4BAheAAAoJEDs+MlG893hMIQwA/j5H5ydAdsz4sbmKUsXwKQl0JHozSIzWIrUELZZ73YrGAQCqeKDM0QfrJdSPktYzaVjQ2oqglQtxy7RW3fW25iZECg==
