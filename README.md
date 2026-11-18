@@ -7,7 +7,7 @@ Personal Flatpak repository to distribute my personal apps
 To install applications that are hosted with this Flatpak repository, use the following:
 
 ```  
-flatpak remote-add yveskaufmann https://yveskaufmann.github.io/flatpak-repo/
+flatpak remote-add --user yveskaufmann https://yveskaufmann.github.io/flatpak-repo/yveskaufmann.flatpakrepo
 flatpak install <app-id>
 ```
 
