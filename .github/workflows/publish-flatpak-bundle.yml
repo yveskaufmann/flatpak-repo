@@ -1,0 +1,80 @@
+name: Import Flatpak Bundle
+description: Downloads flatpak bundles from given GH-release and import into the flatpak repository 
+
+on:  
+  workflow_dispatch:
+    inputs:
+      repo:
+        required: true
+        description: Repository to take the flatpak bundle from
+        type: string
+      version:
+        required: false
+        description: GH-Release to take the flatpak bundle from
+        type: string
+        default: latest
+        
+        
+concurrency:
+  group: flatpak-bundle-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  
+jobs:
+  download-and-import:
+    runs-on: ububuntu-latest 
+    steps:
+      - name: Install Flatpak & Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+      
+      - name: Import GPG Signing Key
+        run: |
+          echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
+
+      - name: Checkout Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: gh-pages 
+          fetch-depth: 1
+          path: repo
+
+      - name: Download .flatpak bundle from Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SOURCE_REPO: ${{ github.event.client_payload.repo || inputs.repo }}
+          RELEASE_TAG: ${{ github.event.client_payload.version || inputs.version }}
+        run: |
+          mkdir -p downloads
+          gh release download "$RELEASE_TAG" \
+            --repo "yveskaufmann/$SOURCE_REPO" \
+            --pattern "*.flatpak" \
+            --dir downloads/
+
+      - name: Import bundle into OSTree and prune old versions
+        run: |
+          for bundle in downloads/*.flatpak; do
+            echo "Importing $bundle ..."
+            flatpak build-import-bundle --gpg-sign=${{ secrets.GPG_KEY_ID }} repo/ "$bundle"
+          done
+
+          flatpak build-update-repo \
+            --gpg-sign=${{ secrets.GPG_KEY_ID }} \
+            --generate-static-deltas \
+            --prune \
+            --prune-depth=1 \
+            repo/
+
+      - name: Commit and Push to gh-pages
+        run: |
+          cd repo
+          git config user.name "Flatpak Release Bot"
+          git config user.email "noreply@github.com"
+          git add -A
+          git commit --amend -m "Publish ${{ github.event.client_payload.repo || inputs.repo }} (${{ github.event.client_payload.version || inputs.version }})"
+          git push --force origin gh-pages
+      
