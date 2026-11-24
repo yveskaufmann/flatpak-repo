@@ -25,7 +25,7 @@ jobs:
   import-flatpak-bundle:
     if: github.actor == 'yveskaufmann'
     runs-on: ubuntu-latest
-    environment: github-pages
+    environment: flatpak-repository
     steps:
       - name: Install Flatpak & Dependencies
         run: |
