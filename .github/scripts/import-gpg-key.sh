@@ -41,6 +41,8 @@ echo "$GPG_PRIVATE_KEY" | gpg --batch --import
 echo "$GPG_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback \
   --passphrase-fd 0 --local-user "$GPG_KEY_ID" --clear-sign --output /dev/null /dev/null
 
+echo "GNUPGHOME=$GNUPGHOME" >> "$GITHUB_ENV"
+
 #
 # With the GPG key imported and the passphrase cached, subsequent Flatpak operations can use the cached passphrase for signing
 # For example, when importing Flatpak bundles or updating the repository:
