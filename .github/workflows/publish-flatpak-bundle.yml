@@ -1,7 +1,7 @@
 name: Import Flatpak Bundle
-description: Downloads flatpak bundles from given GH-release and import into the flatpak repository 
+description: Downloads flatpak bundles from given GH-release and import into the flatpak repository
 
-on:  
+on:
   workflow_dispatch:
     inputs:
       repo:
@@ -13,33 +13,36 @@ on:
         description: GH-Release to take the flatpak bundle from
         type: string
         default: latest
-        
-        
+
 concurrency:
   group: flatpak-bundle-deploy
   cancel-in-progress: false
 
 permissions:
   contents: write
-  
+
 jobs:
-  download-and-import:
-    runs-on: ububuntu-latest 
+  import-flatpak-bundle:
+    if: github.actor == 'yveskaufmann'
+    runs-on: ubuntu-latest
+    environment: github-pages
     steps:
       - name: Install Flatpak & Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y flatpak
           flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-      
-      - name: Import GPG Signing Key
-        run: |
-          echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
 
-      - name: Checkout Repository
+      - name: Checkout Repository scripts
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: gh-pages 
+          ref: main
+          fetch-depth: 1
+
+      - name: Checkout Flatpak Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: gh-pages
           fetch-depth: 1
           path: repo
 
@@ -55,8 +58,21 @@ jobs:
             --pattern "*.flatpak" \
             --dir downloads/
 
+      - name: Import GPG Signing Key
+        run: |
+          .github/scripts/import-gpg-key.sh
+        env:
+          GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+
       - name: Import bundle into OSTree and prune old versions
         run: |
+
+          if [[ ! -d repo ]]; then
+            ostree init --repo=repo --mode=archive-z2
+          fi
+
           for bundle in downloads/*.flatpak; do
             echo "Importing $bundle ..."
             flatpak build-import-bundle --gpg-sign=${{ secrets.GPG_KEY_ID }} repo/ "$bundle"
@@ -77,4 +93,3 @@ jobs:
           git add -A
           git commit --amend -m "Publish ${{ github.event.client_payload.repo || inputs.repo }} (${{ github.event.client_payload.version || inputs.version }})"
           git push --force origin gh-pages
-      
