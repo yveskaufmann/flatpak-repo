@@ -80,6 +80,7 @@ jobs:
           done
           echo "✅ All bundles imported successfully"
 
+          mkdir -p repo/refs/remotes repo/refs/mirrors repo/tmp
           flatpak build-update-repo \
             --gpg-sign=${{ secrets.GPG_KEY_ID }} \
             --generate-static-deltas \
